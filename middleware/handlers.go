@@ -18,6 +18,10 @@ type Admin struct {
 	Email string `json:"email"`
 }
 
+type response struct {
+	Message string `json:"message,omitempty"`
+}
+
 func createConnection() *sql.DB {
 	err := godotenv.Load(".env")
 
@@ -76,50 +80,53 @@ func AdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	res := response{
+		Message: "Admin login successful",
+	}
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, "Admin login successful")
+	json.NewEncoder(w).Encode(res)
 }
 
-func AdminChangePassword(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "PUT")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+// func AdminChangePassword(w http.ResponseWriter, r *http.Request) {
+// 	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+// 	w.Header().Set("Access-Control-Allow-Origin", "*")
+// 	w.Header().Set("Access-Control-Allow-Methods", "PUT")
+// 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-	if r.Method != http.MethodPut {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
+// 	if r.Method != http.MethodPut {
+// 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+// 		return
+// 	}
 
-	// create the postgres db connection
-	db := createConnection()
+// 	// create the postgres db connection
+// 	db := createConnection()
 
-	// close the db connection
-	defer db.Close()
+// 	// close the db connection
+// 	defer db.Close()
 
-	var changePassword models.LoginAdmin
-	err := json.NewDecoder(r.Body).Decode(&changePassword)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+// 	var changePassword models.LoginAdmin
+// 	err := json.NewDecoder(r.Body).Decode(&changePassword)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusBadRequest)
+// 		return
+// 	}
 
-	// Authenticate the admin (you can use session management or tokens)
-	// Here, we'll assume the admin is authenticated
+// 	// Authenticate the admin (you can use session management or tokens)
+// 	// Here, we'll assume the admin is authenticated
 
-	// Hash the new password (You should hash passwords)
-	newPassword := changePassword.Password
+// 	// Hash the new password (You should hash passwords)
+// 	newPassword := changePassword.Password
 
-	// Update the password in the database
-	_, err = db.Exec("UPDATE admin_table SET password = $1 WHERE email = $2", newPassword, changePassword.Email)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+// 	// Update the password in the database
+// 	_, err = db.Exec("UPDATE admin_table SET password = $1 WHERE email = $2", newPassword, changePassword.Email)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
 
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, "Password changed successfully")
-}
+// 	w.WriteHeader(http.StatusOK)
+// 	fmt.Fprintln(w, "Password changed successfully")
+// }
 
 // func AddAdminCredentials(w http.ResponseWriter, r *http.Request) {
 // 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
