@@ -25,7 +25,7 @@ func Router() *mux.Router {
 	// router.HandleFunc("/api/invoice-lines", middleware.CreateUser).Methods("POST", "OPTIONS")
 
 	router.HandleFunc("/api/login", middleware.AdminLogin).Methods("POST", "OPTIONS")
-	// router.HandleFunc("/api/change-password", middleware.AdminChangePassword).Methods("PUT", "OPTIONS")
+	router.HandleFunc("/api/change-password", middleware.AdminChangePassword).Methods("POST", "OPTIONS")
 	// router.HandleFunc("/api/addadmin", middleware.AddAdminCredentials).Methods("POST", "OPTIONS")
 
 	// router.HandleFunc("/api/user/{id}", middleware.UpdateUser).Methods("PUT", "OPTIONS")
