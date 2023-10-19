@@ -239,3 +239,105 @@ func AdminChangePassword(w http.ResponseWriter, r *http.Request) {
 // 	w.WriteHeader(http.StatusCreated)
 // 	fmt.Fprintln(w, "Admin credentials added successfully")
 // }
+
+func CreateProduct(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	authHeader := r.Header.Get("Authorization")
+
+	if authHeader == "" {
+		http.Error(w, "Authorization header is missing", http.StatusBadRequest)
+		return
+	}
+
+	// Split the header value to get the actual token part
+	// The header value should be in the format "Bearer <token>"
+	authHeaderParts := strings.Split(authHeader, " ")
+	if len(authHeaderParts) != 2 || authHeaderParts[0] != "Bearer" {
+		http.Error(w, "Invalid Authorization header format", http.StatusUnauthorized)
+		return
+	}
+
+	jwtToken := authHeaderParts[1]
+
+	token, errt := VerifyJWT(jwtToken)
+
+	if errt != nil {
+		http.Error(w, errt.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	// create the postgres db connection
+	db := createConnection()
+
+	// close the db connection
+	defer db.Close()
+
+	var newProduct models.Products
+	err := json.NewDecoder(r.Body).Decode(&newProduct)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Insert the new admin credentials into the database
+	_, err = db.Exec("INSERT INTO product_table (name, description, unitPrice, unitsInStock) VALUES ($1, $2, $3, $4)", newProduct.Name, newProduct.Description, newProduct.UnitPrice, newProduct.UnitsInStock)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res := response{
+		Message: "Product Added successfully",
+		Jwt:     token.Signature,
+	}
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(res)
+}
+
+func GetAllProducts(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	// Create a database connection
+	db := createConnection()
+	defer db.Close()
+
+	// Query to select all products
+	rows, err := db.Query("SELECT * FROM product_table")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var products []models.Products // Assuming you have a "models.Products" struct
+
+	// Iterate through the rows and scan into the products slice
+	for rows.Next() {
+		var product models.Products
+		if err := rows.Scan(&product.ProductCode, &product.Name, &product.Description, &product.UnitPrice, &product.UnitsInStock); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		products = append(products, product)
+	}
+
+	// Check for errors during row iteration
+	if err = rows.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Convert the products slice to JSON and send it as the response
+	jsonResponse, err := json.Marshal(products)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+}
