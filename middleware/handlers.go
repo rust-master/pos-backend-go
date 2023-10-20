@@ -341,3 +341,62 @@ func GetAllProducts(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonResponse)
 }
+
+func DeleteProductByCode(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	authHeader := r.Header.Get("Authorization")
+
+	if authHeader == "" {
+		http.Error(w, "Authorization header is missing", http.StatusBadRequest)
+		return
+	}
+
+	// Split the header value to get the actual token part
+	// The header value should be in the format "Bearer <token>"
+	authHeaderParts := strings.Split(authHeader, " ")
+	if len(authHeaderParts) != 2 || authHeaderParts[0] != "Bearer" {
+		http.Error(w, "Invalid Authorization header format", http.StatusUnauthorized)
+		return
+	}
+
+	jwtToken := authHeaderParts[1]
+
+	token, errt := VerifyJWT(jwtToken)
+
+	if errt != nil {
+		http.Error(w, errt.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	// Get the product code from the URL parameter
+	productCode := r.URL.Query().Get("productCode")
+
+	// Check if the product code is provided
+	if productCode == "" {
+		http.Error(w, "Product code is missing in the request", http.StatusBadRequest)
+		return
+	}
+
+	// Create a database connection
+	db := createConnection()
+
+	// Close the database connection when done
+	defer db.Close()
+
+	// Delete the product from the database based on the product code
+	_, err := db.Exec("DELETE FROM product_table WHERE productCode = $1", productCode)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res := response{
+		Message: "Product with code " + productCode + " deleted successfully",
+		Jwt:     token.Signature,
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
+}

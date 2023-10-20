@@ -11,6 +11,7 @@ func Router() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/api/products", middleware.GetAllProducts).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/products", middleware.CreateProduct).Methods("POST", "OPTIONS")
+	router.HandleFunc("/api/delete-product", middleware.DeleteProductByCode).Methods("DELETE", "OPTIONS")
 
 	// router.HandleFunc("/api/customers", middleware.CreateUser).Methods("GET", "OPTIONS")
 	// router.HandleFunc("/api/customers", middleware.CreateUser).Methods("POST", "OPTIONS")
