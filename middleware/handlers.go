@@ -342,6 +342,51 @@ func GetAllProducts(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
+func GetProductByCode(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	// Get the product code from the URL parameter
+	productCode := r.URL.Query().Get("productCode")
+
+	// Check if the product code is provided
+	if productCode == "" {
+		http.Error(w, "Product code is missing in the request", http.StatusBadRequest)
+		return
+	}
+
+	// Create a database connection
+	db := createConnection()
+
+	// Close the database connection when done
+	defer db.Close()
+
+	// Query to select the product by its code
+	row := db.QueryRow("SELECT * FROM product_table WHERE productCode = $1", productCode)
+
+	var product models.Products // Assuming you have a "models.Product" struct
+
+	// Scan the row into the product struct
+	if err := row.Scan(&product.ProductCode, &product.Name, &product.Description, &product.UnitPrice, &product.UnitsInStock); err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Product not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Convert the product to JSON and send it as the response
+	jsonResponse, err := json.Marshal(product)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+}
+
 func DeleteProductByCode(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
