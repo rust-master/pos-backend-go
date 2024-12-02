@@ -7,11 +7,11 @@ type LoginAdmin struct {
 }
 
 type Products struct {
-	ProductCode  int64  `json:"productCode"`
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	UnitPrice    int64  `json:"unitPrice"`
-	UnitsInStock int64  `json:"unitsInStock"`
+	ProductCode  int64   `json:"product_code"`
+	Name         string  `json:"name"`
+	Description  string  `json:"description"`
+	UnitPrice    float64 `json:"unitprice"`
+	UnitsInStock int64   `json:"unitsinstock"`
 }
 
 type Cutomers struct {
